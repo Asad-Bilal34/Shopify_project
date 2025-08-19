@@ -1,3 +1,4 @@
+// app/shopify.server.js
 import "@shopify/shopify-app-remix/adapters/node";
 import {
   ApiVersion,
@@ -5,7 +6,12 @@ import {
   shopifyApp,
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import prisma from "./db.server";
+import { prisma } from "./db.server.js";
+
+// Re-exports — routes same API use karenge
+export { getDashboardData } from "./services/dashboard.server.js";
+export { logTransfer } from "./services/transfers.server.js";
+export { logSale } from "./services/sales.server.js";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,

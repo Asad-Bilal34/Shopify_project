@@ -1,4 +1,11 @@
-import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
+import React from "react";
+import {
+  Link,
+  Outlet,
+  useLoaderData,
+  useRouteError,
+  useLocation,
+} from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
@@ -9,22 +16,40 @@ export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
-
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
 };
 
 export default function App() {
   const { apiKey } = useLoaderData();
+  const location = useLocation();
+
+  // Toggle: show Dashboard link while on /app/locations, otherwise show Locations
+  const onLocations = location.pathname.startsWith("/app/locations");
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
+      {/* Small global polish — does NOT change your logic */}
+      <style>{`
+        .app-shell { padding: 16px; }
+        .app-shell .rounded-md { border-radius: 12px; }
+      `}</style>
+
       <NavMenu>
-        <Link to="/app" rel="home">
-          Home
-        </Link>
-        <Link to="/app/additional">Additional page</Link>
+        {onLocations ? (
+          <Link to="/app" rel="home">Dashboard</Link>
+        ) : (
+          <Link to="/app/locations">Locations</Link>
+        )}
+        <Link to="/app/transfers">Transfers</Link>
+        <Link to="/app/sales">Sales</Link>
+        <Link to="/app/reports">Reports</Link>
+        <Link to="/app/settings">Settings</Link>
       </NavMenu>
-      <Outlet />
+
+      {/* 👇 hydration mismatch warnings ko ignore karega (className/text diff) */}
+      <main className="app-shell" suppressHydrationWarning>
+        <Outlet />
+      </main>
     </AppProvider>
   );
 }

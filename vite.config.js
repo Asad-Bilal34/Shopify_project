@@ -5,9 +5,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 installGlobals({ nativeFetch: true });
 
-// Related: https://github.com/remix-run/remix/issues/2835#issuecomment-1144102176
-// Replace the HOST env var with SHOPIFY_APP_URL so that it doesn't break the remix server. The CLI will eventually
-// stop passing in HOST, so we can remove this workaround after the next major release.
+/**
+ * Shopify CLI env normalization
+ * (same as your code – unchanged)
+ */
 if (
   process.env.HOST &&
   (!process.env.SHOPIFY_APP_URL ||
@@ -17,10 +18,15 @@ if (
   delete process.env.HOST;
 }
 
-const host = new URL(process.env.SHOPIFY_APP_URL || "http://localhost")
-  .hostname;
-let hmrConfig;
+const host = new URL(process.env.SHOPIFY_APP_URL || "http://localhost").hostname;
 
+/**
+ * HMR config:
+ * - localhost -> ws + fixed clientPort
+ * - remote host (Cloudflare domain) -> wss + clientPort 443
+ *   (logic same as before)
+ */
+let hmrConfig;
 if (host === "localhost") {
   hmrConfig = {
     protocol: "ws",
@@ -32,21 +38,31 @@ if (host === "localhost") {
   hmrConfig = {
     protocol: "wss",
     host: host,
-    port: parseInt(process.env.FRONTEND_PORT) || 8002,
+    port: parseInt(process.env.FRONTEND_PORT) || 8002, // unchanged
     clientPort: 443,
   };
 }
 
 export default defineConfig({
   server: {
+    /**
+     * 🔐 IMPORTANT for tunnel:
+     * - host: true => 0.0.0.0 (external access allowed)
+     * - strictPort: true => hamesha yahi port (no random fallback)
+     */
+    host: true,
+    strictPort: true,
+
     allowedHosts: [host],
-    cors: {
-      preflightContinue: true,
-    },
+    cors: { preflightContinue: true },
+
+    // keep your port logic; set PORT in .env to lock it (e.g. 3000)
     port: Number(process.env.PORT || 3000),
+
     hmr: hmrConfig,
+
     fs: {
-      // See https://vitejs.dev/config/server-options.html#server-fs-allow for more information
+      // unchanged
       allow: ["app", "node_modules"],
     },
   },

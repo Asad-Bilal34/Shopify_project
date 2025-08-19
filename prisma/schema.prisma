@@ -1,32 +1,85 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma uses DATABASE_URL from .env
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
   provider = "sqlite"
-  url      = "file:dev.sqlite"
+  url      = env("DATABASE_URL")
 }
 
+
+model VirtualLocation {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  type            String?
+  notes           String?
+  stocks          VirtualStock[]
+  transfersFrom   Transfer[]       @relation("FromLocation")
+  transfersTo     Transfer[]       @relation("ToLocation")
+  sales           Sale[]
+  createdAt       DateTime         @default(now())
+}
+
+model VirtualStock {
+  id         Int             @id @default(autoincrement())
+  locationId Int
+  location   VirtualLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  sku        String
+  qty        Int             @default(0)
+
+  @@unique([locationId, sku])
+}
+
+model Transfer {
+  id             Int             @id @default(autoincrement())
+  fromLocationId Int
+  toLocationId   Int
+  fromLocation   VirtualLocation @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: Cascade)
+  toLocation     VirtualLocation @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: Cascade)
+  sku            String
+  qty            Int
+  notes          String?
+  createdAt      DateTime        @default(now())
+}
+
+model Sale {
+  id         Int             @id @default(autoincrement())
+  locationId Int
+  location   VirtualLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  sku        String
+  qty        Int
+  value      Int?
+  // Shopify draft or order GID (optional)
+  shopifyOrderId String?
+  createdAt   DateTime        @default(now())
+}
+
+model Setting {
+  id                    Int      @id @default(1) // single row
+  warehouseLocationGID  String   // gid://shopify/Location/123456789
+  autoSyncOrders        Boolean  @default(false)
+  invoiceBranding       String?
+
+  @@map("settings")
+}
 model Session {
-  id            String    @id
+  id            String   @id
   shop          String
-  state         String
-  isOnline      Boolean   @default(false)
+  state         String?
+  isOnline      Boolean  @default(false)
   scope         String?
   expires       DateTime?
   accessToken   String
   userId        BigInt?
+
+  // extra optional fields (Shopify adapter inits these)
   firstName     String?
   lastName      String?
   email         String?
-  accountOwner  Boolean   @default(false)
+  accountOwner  Boolean? @default(false)
   locale        String?
-  collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+  collaborator  Boolean? @default(false)
+  emailVerified Boolean? @default(false)
 }
