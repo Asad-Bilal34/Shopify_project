@@ -3,6 +3,32 @@ import { useFetcher } from "@remix-run/react";
 import { Button, Modal, TextField, Text } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 
+// --- Toast-once helpers (inline, no new file) ---
+function markSubmitPending(intentKey = "generic") {
+  if (typeof window === "undefined") return;
+  const kPending = `__toast_pending_${intentKey}`;
+  const kConsumed = `__toast_consumed_${intentKey}`;
+  try {
+    sessionStorage.setItem(kPending, "1");
+    sessionStorage.removeItem(kConsumed);
+  } catch {}
+}
+function shouldShowToastOnce(intentKey = "generic") {
+  if (typeof window === "undefined") return true;
+  const kPending = `__toast_pending_${intentKey}`;
+  const kConsumed = `__toast_consumed_${intentKey}`;
+  try {
+    const wasPending = sessionStorage.getItem(kPending) === "1";
+    if (!wasPending) return false;
+    sessionStorage.removeItem(kPending);
+    if (sessionStorage.getItem(kConsumed)) return false;
+    sessionStorage.setItem(kConsumed, "1");
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 /**
  * Add Location with Popup (Modal)
  * - "Add location" button opens modal
@@ -16,11 +42,20 @@ export default function AddLocationInline() {
   const app = useAppBridge();
   const lock = useRef(false);
 
-  // show toast when a location gets added (same behavior)
+  // submit par toast pending mark (so reload pe repeat na ho)
+  useEffect(() => {
+    if (fetcher.state === "submitting") {
+      markSubmitPending("addLocation");
+    }
+  }, [fetcher.state]);
+
+  // show toast when a location gets added (same behavior) — gated once
   useEffect(() => {
     if (fetcher.data?.ok && fetcher.data.intent === "addLocation" && !lock.current) {
       lock.current = true;
-      app.toast.show("Location added", { duration: 1800 });
+      if (shouldShowToastOnce("addLocation")) {
+        app.toast.show("Location added", { duration: 1800 });
+      }
       setName("");
       setActive(false);
       setTimeout(() => (lock.current = false), 2000);

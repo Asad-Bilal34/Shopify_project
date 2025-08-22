@@ -3,7 +3,7 @@
 client_id = "fdab0d6ba91abe6a477c0e16d6d000f0"
 name = "backorder"
 handle = "backorder-7"
-application_url = "https://fashion-aw-camera-bytes.trycloudflare.com"
+application_url = "https://photography-task-reaction-single.trycloudflare.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "read_inventory,read_locations,read_orders,read_products,write_draft_orders"
 
 [auth]
-redirect_urls = ["https://fashion-aw-camera-bytes.trycloudflare.com/auth/callback", "https://fashion-aw-camera-bytes.trycloudflare.com/auth/shopify/callback", "https://fashion-aw-camera-bytes.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://photography-task-reaction-single.trycloudflare.com/auth/callback", "https://photography-task-reaction-single.trycloudflare.com/auth/shopify/callback", "https://photography-task-reaction-single.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

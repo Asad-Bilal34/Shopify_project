@@ -26,27 +26,36 @@ export default function App() {
   // Toggle: show Dashboard link while on /app/locations, otherwise show Locations
   const onLocations = location.pathname.startsWith("/app/locations");
 
+  // ✅ cache host & shop on EVERY route change so new-tab redirects have context
+  React.useEffect(() => {
+    try {
+      const qs = new URLSearchParams(location.search);
+      const host = qs.get("host");
+      const shop = qs.get("shop");
+      if (host) localStorage.setItem("__host", host);
+      if (shop) localStorage.setItem("__shop", shop);
+    } catch {}
+  }, [location.search]);
+
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      {/* Small global polish — does NOT change your logic */}
       <style>{`
         .app-shell { padding: 16px; }
         .app-shell .rounded-md { border-radius: 12px; }
       `}</style>
 
       <NavMenu>
-        {onLocations ? (
-          <Link to="/app" rel="home">Dashboard</Link>
-        ) : (
-          <Link to="/app/locations">Locations</Link>
-        )}
+        
+        <Link to="/app" rel="home">Dashboard</Link>
+        
+        <Link to="/app/locations">Locations</Link>
+      
         <Link to="/app/transfers">Transfers</Link>
         <Link to="/app/sales">Sales</Link>
         <Link to="/app/reports">Reports</Link>
         <Link to="/app/settings">Settings</Link>
       </NavMenu>
 
-      {/* 👇 hydration mismatch warnings ko ignore karega (className/text diff) */}
       <main className="app-shell" suppressHydrationWarning>
         <Outlet />
       </main>
@@ -54,7 +63,6 @@ export default function App() {
   );
 }
 
-// Shopify needs Remix to catch some thrown responses, so that their headers are included in the response.
 export function ErrorBoundary() {
   return boundary.error(useRouteError());
 }

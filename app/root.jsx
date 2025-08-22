@@ -38,6 +38,30 @@ export default function App() {
 `,
           }}
         />
+        {/* 🔁 On hard reload (F5), force landing on /app */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  try{
+    var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]);
+    var isReload = nav ? nav.type === 'reload'
+                       : (performance.navigation && performance.navigation.type === 1);
+    if(isReload){
+      var path = location.pathname || '';
+      if (path.startsWith('/app/') && path !== '/app') {
+        if (window.top && window.top !== window) {
+          window.top.location.replace('/app');
+        } else {
+          location.replace('/app');
+        }
+      }
+    }
+  }catch(e){}
+})();
+`,
+          }}
+        />
       </head>
       <body>
         <Outlet />
